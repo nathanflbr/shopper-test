@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: shopper
+      POSTGRES_PASSWORD: shopper-pass
+      POSTGRES_DB: shopper-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - "3000:3000"
+    network_mode: host
+    depends_on:
+      - db
+
+volumes:
+  db_data:
