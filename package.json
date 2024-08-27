@@ -11,7 +11,10 @@
   "author": "Nathan FL",
   "license": "MIT",
   "dependencies": {
-    "fastify": "^4.28.1"
+    "@fastify/static": "^7.0.4",
+    "@google/generative-ai": "^0.17.1",
+    "fastify": "^4.28.1",
+    "uuid": "^10.0.0"
   },
   "type": "module",
   "devDependencies": {
