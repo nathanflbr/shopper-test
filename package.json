@@ -6,13 +6,15 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node ./dist/index.js",
-    "dev": "tsc -p tsconfig.json && node dist/index.js"
+    "dev": "tsc -p tsconfig.json && node dist/index.js",
+    "devwatch": "tsx watch ./src"
   },
   "author": "Nathan FL",
   "license": "MIT",
   "dependencies": {
     "@fastify/static": "^7.0.4",
     "@google/generative-ai": "^0.17.1",
+    "@prisma/client": "5.19.0",
     "@types/uuid": "^10.0.0",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
@@ -22,6 +24,7 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^22.5.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.5.4"
   }
 }
