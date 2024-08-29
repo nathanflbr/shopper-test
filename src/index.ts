@@ -117,7 +117,7 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
           throw new Error("Error creating measure");
         }
 
-        await ImageService.create(guid, imageUrl, MeasureCreated.id);
+        await ImageService.create(guid, imageUrl, MeasureCreated.measure_uuid);
         await ImageService.saveImage(await removeMimeBase64(image), fileName);
 
         return {
@@ -152,7 +152,7 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
       try {
         const measure = await new Measure();
 
-        const measureFind = await measure.findByUUID(measure_uuid);
+        const measureFind = await measure.findOne(measure_uuid);
 
         if (!measureFind) {
           return reply.status(404).send({
@@ -161,7 +161,7 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
           });
         }
 
-        if (measureFind.confirmed) {
+        if (measureFind.has_confirmed) {
           return reply.status(409).send({
             error_code: "CONFIRMATION_DUPLICATE",
             error_description: "Leitura do mês já realizada",

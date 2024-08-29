@@ -10,9 +10,9 @@ export class Measure {
     measure_value: number,
     customer_code: string
   ) => {
-    const readings = await prisma.readings.create({
+    const readings = await prisma.measure.create({
       data: {
-        id: measure_uuid,
+        measure_uuid,
         measure_datetime,
         measure_type,
         measure_value,
@@ -27,22 +27,22 @@ export class Measure {
   };
 
   confirm = async (measure_uuid: string, measure_value: number) => {
-    const readings = await prisma.readings.update({
+    const readings = await prisma.measure.update({
       where: {
-        id: measure_uuid,
+        measure_uuid,
       },
       data: {
-        confirmed: true,
+        has_confirmed: true,
         measure_value,
       },
     });
     return readings;
   };
 
-  findByUUID = async (measure_uuid: string) => {
-    const readings = await prisma.readings.findFirst({
+  findOne = async (measure_uuid: string) => {
+    const readings = await prisma.measure.findFirst({
       where: {
-        id: measure_uuid,
+        measure_uuid,
       },
     });
     return readings;
@@ -53,19 +53,26 @@ export class Measure {
     measure_type?: "WATER" | "GAS"
   ) => {
     if (measure_type) {
-      const typeMeasure = await prisma.readings.findMany({
+      const typeMeasure = await prisma.measure.findMany({
         where: {
           measure_type,
           customer: {
             customer_code,
           },
         },
+        include: {
+          images: {
+            select: {
+              image_url: true,
+            },
+          },
+        },
       });
-      console.log(typeMeasure);
+
       return typeMeasure;
     }
 
-    const measure = await prisma.readings.findMany({
+    const measure = await prisma.measure.findMany({
       where: {
         measure_type,
         customer: {
@@ -82,7 +89,7 @@ export class Measure {
     measure_datetime: Date,
     customer_code: string
   ) => {
-    const existReading = await prisma.readings.findFirst({
+    const existReading = await prisma.measure.findFirst({
       where: {
         measure_type,
         measure_datetime: {

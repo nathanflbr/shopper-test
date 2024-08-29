@@ -14,12 +14,12 @@ const parentDir = path.resolve(currentDir, "../../");
 const UPLOAD_DIR = path.join(parentDir, "uploads");
 
 export class ImageService {
-  static async create(guid: string, imageUrl: string, reading_id: string) {
+  static async create(guid: string, imageUrl: string, measure_id: string) {
     return await prisma.images.create({
       data: {
         guid: guid,
-        temp_link: imageUrl,
-        reading_id: reading_id,
+        image_url: imageUrl,
+        measure_id,
       },
     });
   }
