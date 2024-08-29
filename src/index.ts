@@ -20,6 +20,7 @@ import {
 import { removeMimeBase64 } from "./utils/validade.js";
 import { Customer } from "./services/customer.js";
 import { Measure } from "./services/measure.js";
+import cors from "@fastify/cors";
 
 config();
 
@@ -32,6 +33,10 @@ const UPLOAD_DIR = path.join(parentDir, "uploads");
 
 function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
   const server = fastify({ logger: true, bodyLimit: 10 * 1024 * 1024 });
+
+  server.register(cors, {
+    origin: true,
+  });
 
   server.register(fastifyStatic, {
     root: UPLOAD_DIR,
