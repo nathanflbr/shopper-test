@@ -1,3 +1,7 @@
+export interface ListQuery {
+  measure_type: "WATER" | "GAS";
+}
+
 export interface UploadBody {
   image: string;
   customer_code: string;
