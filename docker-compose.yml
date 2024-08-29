@@ -1,5 +1,18 @@
 version: "3.8"
 services:
+  app:
+    build: .
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shopper-db?schema=public
+    ports:
+      - "3000:3000"
+    network_mode: host
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "pnpm prisma migrate dev && pnpm start"
+
   postgres:
     image: postgres
     restart: always
@@ -9,26 +22,14 @@ services:
       POSTGRES_DB: shopper-db
     ports:
       - "5432:5432"
-    networks:
-      - shopper
+    network_mode: host
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myuser -d mydb"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shopper-db"]
       interval: 5s
       timeout: 5s
       retries: 5
     volumes:
       - db_data:/var/lib/postgresql/data
-
-  app:
-    build: .
-    restart: always
-    ports:
-      - "3000:3000"
-    networks:
-      - shopper
-    depends_on:
-      postgres:
-        condition: service_healthy
 
 volumes:
   db_data:
