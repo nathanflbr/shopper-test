@@ -14,18 +14,18 @@ datasource db {
 }
 
 model customers {
-  id            Int        @id @unique @default(autoincrement())
-  customer_code String     @unique @db.VarChar(255)
-  readings      readings[]
+  id            Int       @id @unique @default(autoincrement())
+  customer_code String    @unique @db.VarChar(255)
+  readings      measure[]
 }
 
-model readings {
-  id               String       @id @unique
+model measure {
+  measure_uuid     String       @id @unique
   customer_id      Int
   measure_datetime DateTime
   measure_type     Measure_Type
   measure_value    Int
-  confirmed        Boolean      @default(false)
+  has_confirmed    Boolean      @default(false)
   customer         customers    @relation(fields: [customer_id], references: [id], onDelete: Cascade)
   images           images[]
 }
@@ -33,10 +33,10 @@ model readings {
 model images {
   id         Int      @id @unique @default(autoincrement())
   guid       String
-  reading_id String
-  temp_link  String
+  measure_id String
+  image_url  String
   createdAt  DateTime @default(now())
-  reading    readings @relation(fields: [reading_id], references: [id], onDelete: Cascade)
+  reading    measure  @relation(fields: [measure_id], references: [measure_uuid], onDelete: Cascade)
 }
 
 enum Measure_Type {
