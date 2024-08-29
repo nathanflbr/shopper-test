@@ -23,6 +23,7 @@ export class Measure {
         },
       },
     });
+
     return readings;
   };
 
