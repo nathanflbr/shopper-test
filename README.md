@@ -1,1 +1,1 @@
-![Banner Image](/readme-assets/banner.png)
+![Banner Image](/readme-assets/design-for-git.png)
