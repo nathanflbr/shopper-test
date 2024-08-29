@@ -15,7 +15,6 @@ import { PatchRequestBody, UploadBody, UploadResponse } from "./types/index.js";
 import { removeMimeBase64 } from "./utils/validade.js";
 import { Customer } from "./controllers/customer.js";
 import { Reading } from "./controllers/readings.js";
-import { ImageHandler } from "./controllers/images.js";
 
 config();
 
@@ -30,10 +29,6 @@ console.log(UPLOAD_DIR);
 
 function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
   const server = fastify({ logger: true, bodyLimit: 10 * 1024 * 1024 });
-
-  server.setErrorHandler((error, request, reply) => {
-    reply.status(500).send({ ok: false });
-  });
 
   server.register(fastifyStatic, {
     root: UPLOAD_DIR,
@@ -95,6 +90,7 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
         const imageUrl = `http://${request.hostname}/uploads/${fileName}`;
 
         const measure = new Reading(
+          uuidv4(),
           convertStringToDate,
           measure_type,
           recognizedValue,
@@ -118,14 +114,7 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
           throw new Error("Error creating measure");
         }
 
-        const handlerImage = new ImageHandler(
-          guid,
-          imageUrl,
-          MeasureCreated.id
-        );
-
-        await handlerImage.create();
-
+        await ImageService.create(guid, imageUrl, MeasureCreated.id);
         await ImageService.saveImage(imageCleaned, fileName);
 
         return {
@@ -157,7 +146,6 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
       reply: FastifyReply
     ) => {
       const { measure_uuid, confirmed_value } = request.body;
-
       try {
         // Verificar se o código de leitura existe
         const measure = await new Reading();
