@@ -154,6 +154,12 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
 
         const measureFind = await measure.findOne(measure_uuid);
 
+        if (isNaN(confirmed_value)) {
+          return reply.status(400).send({
+            error_code: "INVALID_DATA",
+            error_description: "Valor de confirmação inválido",
+          });
+        }
         if (!measureFind) {
           return reply.status(404).send({
             error_code: "MEASURE_NOT_FOUND",
