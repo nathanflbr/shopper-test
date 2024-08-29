@@ -54,16 +54,16 @@ export class Customer {
 
   async getAllReadings() {
     try {
-      const readings = await prisma.measure.findMany({
+      const measures = await prisma.measure.findMany({
         where: {
           customer: {
             customer_code: this.customer_code,
           },
         },
       });
-      return readings;
+      return measures;
     } catch (error) {
-      console.error("Error getting readings:", error);
+      console.error("Error getting measures:", error);
       throw error;
     }
   }
