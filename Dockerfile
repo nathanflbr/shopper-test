@@ -8,7 +8,11 @@ RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
 COPY . .
 
+RUN pnpm prisma generate
+
 RUN pnpm build
+
+RUN pnpm prisma:migrate
 
 EXPOSE 3000
 
