@@ -54,7 +54,7 @@ export class Customer {
 
   async getAllReadings() {
     try {
-      const readings = await prisma.readings.findMany({
+      const readings = await prisma.measure.findMany({
         where: {
           customer: {
             customer_code: this.customer_code,
