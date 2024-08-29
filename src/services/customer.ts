@@ -3,12 +3,9 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export class Customer {
-  customer_code: string;
+  customer_code?: string;
 
   constructor(customer_code: string) {
-    if (!customer_code) {
-      throw new Error("Customer code is required");
-    }
     this.customer_code = customer_code;
   }
 
@@ -27,6 +24,10 @@ export class Customer {
   }
 
   async create() {
+    if (!this.customer_code) {
+      throw new Error("Customer code is required");
+    }
+
     const customerInstance = new Customer(this.customer_code);
     const existingCustomer = await customerInstance.findCustomer();
 

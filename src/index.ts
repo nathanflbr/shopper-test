@@ -13,8 +13,8 @@ import { ImageService } from "./services/image_service.js";
 import { ImageAnalyzer } from "./services/image_analyzer.js";
 import { PatchRequestBody, UploadBody, UploadResponse } from "./types/index.js";
 import { removeMimeBase64 } from "./utils/validade.js";
-import { Customer } from "./controllers/customer.js";
-import { Reading } from "./controllers/readings.js";
+import { Customer } from "./services/customer.js";
+import { Reading } from "./services/measure.js";
 
 config();
 
@@ -70,6 +70,8 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
         const customer = new Customer(customer_code);
 
         const customerResult = await customer.create();
+
+        const customerAllReadings = await customer.getAllReadings();
 
         const convertStringToDate = new Date(measure_datetime);
 
