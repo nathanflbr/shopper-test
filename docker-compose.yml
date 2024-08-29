@@ -12,14 +12,14 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
-  app:
-    build: .
-    restart: always
-    ports:
-      - "3000:3000"
-    network_mode: host
-    depends_on:
-      - db
+  #app:
+  #build: .
+  #restart: always
+  #ports:
+  #- "3000:3000"
+  #network_mode: host
+  #depends_on:
+  #- db
 
 volumes:
   db_data:

@@ -11,10 +11,15 @@ import { fileURLToPath } from "url";
 import { config } from "dotenv";
 import { ImageService } from "./services/image_service.js";
 import { ImageAnalyzer } from "./services/image_analyzer.js";
-import { PatchRequestBody, UploadBody, UploadResponse } from "./types/index.js";
+import {
+  ListQuery,
+  PatchRequestBody,
+  UploadBody,
+  UploadResponse,
+} from "./types/index.js";
 import { removeMimeBase64 } from "./utils/validade.js";
 import { Customer } from "./services/customer.js";
-import { Reading } from "./services/measure.js";
+import { Measure } from "./services/measure.js";
 
 config();
 
@@ -24,8 +29,6 @@ const __dirname = path.dirname(__filename);
 const currentDir = __dirname;
 const parentDir = path.resolve(currentDir, "../");
 const UPLOAD_DIR = path.join(parentDir, "uploads");
-
-console.log(UPLOAD_DIR);
 
 function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
   const server = fastify({ logger: true, bodyLimit: 10 * 1024 * 1024 });
@@ -69,37 +72,29 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
       try {
         const customer = new Customer(customer_code);
 
-        const customerResult = await customer.create();
-
-        const customerAllReadings = await customer.getAllReadings();
+        const customerCreate = await customer.create();
 
         const convertStringToDate = new Date(measure_datetime);
 
-        const imageCleaned = await removeMimeBase64(image);
+        // Generate UUID, File name e Url Da Imagem
+        const guid = uuidv4();
+        const fileName = `${guid}.jpg`;
+        const imageUrl = `http://${request.hostname}/uploads/${fileName}`;
 
-        if (!ImageService.isValidBase64(imageCleaned)) {
+        if (!ImageService.isValidBase64(await removeMimeBase64(image))) {
           reply.code(400).send({ error: "Invalid image format" });
           throw new Error("Invalid image format");
         }
 
-        const guid = uuidv4();
-        const fileName = `${guid}.jpg`;
+        const imageValue = await imageAnalyzer.extractValueFromImage(image);
 
-        const recognizedValue = await imageAnalyzer.extractValueFromImage(
-          image
-        );
+        const measure = new Measure();
 
-        const imageUrl = `http://${request.hostname}/uploads/${fileName}`;
-
-        const measure = new Reading(
-          uuidv4(),
-          convertStringToDate,
+        const MeasureExist = await measure.existReading(
           measure_type,
-          recognizedValue,
-          customerResult.customer_code
+          convertStringToDate,
+          customerCreate.customer_code
         );
-
-        const MeasureExist = await measure.existReading();
 
         if (MeasureExist) {
           reply.code(409).send({
@@ -109,7 +104,13 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
           throw new Error("Measure already exists for this date");
         }
 
-        const MeasureCreated = await measure.create();
+        const MeasureCreated = await measure.create(
+          guid,
+          convertStringToDate,
+          measure_type,
+          imageValue,
+          customerCreate.customer_code
+        );
 
         if (MeasureCreated === null) {
           reply.code(500).send({ error_code: "CREATING_ERROR" });
@@ -117,11 +118,11 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
         }
 
         await ImageService.create(guid, imageUrl, MeasureCreated.id);
-        await ImageService.saveImage(imageCleaned, fileName);
+        await ImageService.saveImage(await removeMimeBase64(image), fileName);
 
         return {
           image_url: imageUrl,
-          measure_value: recognizedValue,
+          measure_value: imageValue,
           measure_uuid: guid,
         };
       } catch (error) {
@@ -149,35 +150,25 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
     ) => {
       const { measure_uuid, confirmed_value } = request.body;
       try {
-        // Verificar se o código de leitura existe
-        const measure = await new Reading();
-        /*         const measure = await prisma.measure.findUnique({
-          where: { uuid: measure_uuid },
-        }); */
+        const measure = await new Measure();
 
-        if (!measure) {
+        const measureFind = await measure.findByUUID(measure_uuid);
+
+        if (!measureFind) {
           return reply.status(404).send({
             error_code: "MEASURE_NOT_FOUND",
             error_description: "Leitura não encontrada",
           });
         }
 
-        // Verificar se o código de leitura já foi confirmado
-        if (measure.isConfirmed) {
+        if (measureFind.confirmed) {
           return reply.status(409).send({
             error_code: "CONFIRMATION_DUPLICATE",
             error_description: "Leitura do mês já realizada",
           });
         }
 
-        // Salvar no banco de dados o novo valor informado
-        /*         await prisma.measure.update({
-          where: { uuid: measure_uuid },
-          data: {
-            confirmedValue: confirmed_value,
-            isConfirmed: true,
-          },
-        }); */
+        await measure.confirm(measure_uuid, confirmed_value);
 
         return reply.status(200).send({ success: true });
       } catch (error) {
@@ -189,6 +180,51 @@ function createServer(imageAnalyzer: ImageAnalyzer): FastifyInstance {
       }
     },
   });
+
+  server.get<{ Querystring: ListQuery; Params: { customer_code: string } }>(
+    "/:customer_code/list",
+    async (request, reply) => {
+      try {
+        const customer_code = request.params.customer_code;
+        const measure_type = request.query.measure_type;
+
+        const measure = new Measure();
+
+        if (
+          measure_type &&
+          measure_type !== "WATER" &&
+          measure_type !== "GAS"
+        ) {
+          return reply.code(400).send({
+            error_code: "INVALID_TYPE",
+            error_description: `Tipo de medição não permitida`,
+          });
+        }
+
+        const allMeasure = await measure.findAllMeasure(
+          customer_code,
+          measure_type
+        );
+
+        if (allMeasure.length <= 0) {
+          return reply.code(404).send({
+            error_code: "MEASURES_NOT_FOUND",
+            error_description: `Nenhuma leitura encontrada`,
+          });
+        }
+
+        return reply.code(200).send({
+          customer_code,
+          measures: allMeasure,
+        });
+      } catch {
+        reply.code(500).send({
+          error_code: "INTERNAL_SERVER_ERROR",
+          error_description: "Ocorreu um erro interno no servidor",
+        });
+      }
+    }
+  );
 
   server.get<{ Params: { fileName: string } }>(
     "/uploads/:fileName",
