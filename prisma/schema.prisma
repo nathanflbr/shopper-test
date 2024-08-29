@@ -20,11 +20,12 @@ model customers {
 }
 
 model readings {
-  id               Int          @id @unique @default(autoincrement())
+  id               String       @id @unique
   customer_id      Int
   measure_datetime DateTime
   measure_type     Measure_Type
   measure_value    Int
+  confirmed        Boolean      @default(false)
   customer         customers    @relation(fields: [customer_id], references: [id], onDelete: Cascade)
   images           images[]
 }
@@ -32,7 +33,7 @@ model readings {
 model images {
   id         Int      @id @unique @default(autoincrement())
   guid       String
-  reading_id Int
+  reading_id String
   temp_link  String
   createdAt  DateTime @default(now())
   reading    readings @relation(fields: [reading_id], references: [id], onDelete: Cascade)
